@@ -1,0 +1,150 @@
+import calendar
+import sqlite3 as db
+import datetime as dt
+
+import csv
+
+class DataAccess():
+
+	def __init__(self, ident, path):
+		self.__pid=ident
+		self.__dbpath=path
+		
+		conn = db.connect(self.__dbpath)
+		self.__cols = self.getColumns(conn)
+		conn.close()
+
+	def insertData(self, path):	
+		conn = db.connect(self.__dbpath)
+		c = conn.cursor()
+
+		c.execute('''CREATE TABLE IF NOT EXISTS patient_'''+str(self.__pid)+''' (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			at TEXT NOT NULL,
+			gluc INTEGER NOT NULL,
+			bolis INTEGER,
+			carb INTEGER,
+			name TEXT,
+			model TEXT,
+			evnt TEXT
+		);''')
+
+		#Need to change how we open the file depending on the newline delimiter
+		with open(path) as csv:
+			devs={}
+			for line in csv:	#WTF, this should be parsig each line 
+			#separately but instead is grabbing the whole file as one in the Kim file
+				line=line.split(',')
+				if not line[1]:
+						if len(devs) == 0:
+							devs[line[6]] = line[5];
+						else:
+							if line[6] not in devs.keys():
+								devs[line[6]] = line[5];
+				if line[0] != "Index" and line[1] != "":
+					at=dt.datetime.strptime(line[1],"%Y-%m-%d %H:%M:%S")
+					at=self.convertToUnix(at)
+
+					evnt=line[2]
+					model=line[6]
+					name=devs[model]
+					gluc=int(line[7])
+
+					c.execute('''INSERT INTO patient_'''+str(self.__pid)+''' (at, gluc, name, model, evnt) VALUES (?, ?, ?, ?, ?)''',
+						(at,gluc,name,model,evnt))
+
+		conn.commit()
+		c.close()
+		conn.close()
+
+	#This function is to get data from the database based on a user defined time frame
+	#Input: two datetime objects (start, stop) and one boolean (desc) to indicate order to return array in
+	#Output: if desc == false, returns array in OLD to NEW order, else in NEW to OLD
+	def getData(self, start = None, stop = None, desc = False):
+
+		conn = db.connect(self.__dbpath)
+		c = conn.cursor()
+		start_time = self.convertToUnix(start)
+		stop_time = self.convertToUnix(stop)
+
+		if start == None and stop == None:
+			array = c.execute('''SELECT * FROM patient_42:''')
+
+		if start == None:
+			array = c.execute('''SELECT * FROM patient_42 WHERE at < ?:''', (stop_time))
+		
+		if stop == None:
+			array = c.execute('''SELECT * FROM patient_42 WHERE at > ?:''', (start_time))
+
+		else:
+			array  = c.execute('''SELECT * FROM patient_42 WHERE
+			at BETWEEN ? AND ?:''',(start_time,stop_time)) #this returns in ascending order, OLD to NEW
+		
+		
+		for i in range(len(array)):
+			array[i][1] = self.convertToDateTime(array[i][1])
+			
+		if desc==True: #so if they want it in descending order, NEW to OLD
+			return reversed(array)
+		
+		return array
+
+		
+	def addColumn(self, colName, vals):
+		conn = db.connect(self.__dbpath)
+		c = conn.cursor()
+
+		if type(vals[0]) is int:
+			c.execute('ALTER TABLE patient_'+str(self.__pid)+' ADD COLUMN ? {INTEGER};',(colName))
+		elif type(vals[0]) is float:
+			c.execute('ALTER TABLE patient_'+str(self.__pid)+' ADD COLUMN ? {REAL};',(colName))
+		elif type(vals[0]) is string:
+			c.execute('ALTER TABLE patient_'+str(self.__pid)+' ADD COLUMN ? {TEXT};',(colName))
+		else:
+			print("ERROR: You entered an invalid type. Please consult the API and try again.")
+		
+		for i in range(len(vals)):
+			c.execute('update patient_' +str(self.__pid)+ ' set ?=? where id=?;', (colName, vals[i],i))
+
+		conn.commit()
+		c.close()
+		conn.close()
+
+	def UpdateRow(colname,collist,valuelist):
+		#Sam and I (caleb) talked about how to modify this to make it 
+		#more efficient and easier to use.
+
+		#also, check out the dict.keys() function which returns the list of 
+		#valid keys
+		allCol = getColumns(self, conn)
+		c = conn.cursor()			
+		for column in allCol:
+			for col in collist:
+				if column == col:
+					for val in valuelist:
+						c.execute('''Update patient_''' +str(self.__pid)+ '''Set(?) where(?) = (?) ''', (collist[col]), (colname), (valuelist[val]))
+
+	def convertToUnix(self,time):
+		return calendar.timegm(time.utctimetuple())
+
+	def convertToDateTime(self,time):
+		return dt.datetime.utcfromtimestamp(time)
+
+	def tableExists(self,conn):
+		c = conn.cursor()
+		c.execute('''SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=? ;'''
+			,("patient_"+str(self.__pid),))
+
+		exists = True if c.fetchone()[0] == 1 else False
+		c.close()
+		return exists
+
+	def getColumns(self,conn):
+		if self.tableExists(conn):
+			c=conn.cursor()
+			c.execute('SELECT * FROM patient_'+str(self.__pid)+';')
+			cols=[desc[0] for desc in c.description]
+			c.close()
+			return cols
+		else: 
+			return []
