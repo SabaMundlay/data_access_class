@@ -1,1 +1,12 @@
 #This is the actual read me for our database. 
+
+
+Function: addColumn(self,colName, vals)
+To add a new column to the existing database, simply call this 
+function where colName is a string representing the name of the 
+column you want to add. vals is a dictionary containing values
+that you want this new column populated with. The dictionary must
+contain datetime objects paired with the value to be put into the 
+column. This is so the function knows where to insert each value 
+based on the date that it is paired with. If you do not want to 
+add any values to the new column, simply send an empty dictionary.
