@@ -15,3 +15,9 @@ Function: getColumnNames(self)
 To get all of the column names that are in the existing 
 database, simply call this function. The function takes in no 
 arguments and returns a list of the column names in the database.
+
+Function: getNextID(self,conn)
+Call this function to get the highest ID currently in the 
+database. This functon only takes in the connection path
+as an argument and does not return anything; it just changes
+the value of 'self.__nextID'.
