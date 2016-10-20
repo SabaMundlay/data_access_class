@@ -17,7 +17,8 @@ class dataAccess():
 		self.__getNextID(conn)	#get last ID used
 		conn.close()
 
-
+	def __repr__(self):
+		return ''.join(["patient_",self.__pid])
 	############################################################################
 	#This function takes the given csv file and adds any new data found in the 
 	#  file to the database
