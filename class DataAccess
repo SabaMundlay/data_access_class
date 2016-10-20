@@ -9,20 +9,20 @@ class dataAccess():
 #					Functions called from outside of class					   #
 ################################################################################
 	def __init__(self, ident, path):
-		self.__pid=ident	#patient ID
+		self.__pid=ident	#patient ID suffix
 		self.__dbpath=path	#database location
 		
 		conn = db.connect(self.__dbpath) #get a connection to the DB
-		self.__cols = self.getColumns(conn) #get column names
-		self.getNextID(conn)	#get last ID used
+		self.__cols = self.__getColumns(conn) #get column names
+		self.__getNextID(conn)	#get last ID used
 		conn.close()
 
 
 	############################################################################
 	#This function takes the given csv file and adds any new data found in the 
-	#  file to the database(doesn't actually check for duplicate data yet)
+	#  file to the database
 	#Input: This function takes a path to a CGM's csv of recordings in the 
-	#  formate that we have been working with so fat this semester from the 
+	#  format that we have been working with so fat this semester from the 
 	#  Dexcom G4 and G5 devices
 	#Output: The Function does not return anything but rather, if the algorithm
 	#  successfully found new data then that will be added to the database and 
@@ -41,6 +41,8 @@ class dataAccess():
 			model TEXT,
 			evnt TEXT
 		);''')
+
+		iskim = False
 
 		with open(path) as csv:
 			devs={}
@@ -70,7 +72,7 @@ class dataAccess():
 						hour = rest[:slash]
 						minute = rest[slash+1:]
 						at = dt.datetime(2000+int(year),int(month),int(day),int(hour),int(minute))
-					at=self.convertToUnix(at)
+					at=self.__convertToUnix(at)
 					evnt=line[2]
 					model=line[6]
 					name=devs[model]
@@ -102,21 +104,21 @@ class dataAccess():
 	    if start == None and stop == None:
 	    	array = c.execute('''SELECT * FROM patient_42 ORDER BY at ASC;''').fetchall()
 	    elif start == None:
-		    stop_time = self.convertToUnix(stop)
+		    stop_time = self.__convertToUnix(stop)
 		    array = c.execute('''SELECT * FROM patient_42 WHERE at < ? 
 		    	ORDER BY at ASC;''',(stop_time,)).fetchall()
 	    elif stop == None:
-	        start_time = self.convertToUnix(start)
+	        start_time = self.__convertToUnix(start)
 	        array = c.execute('''SELECT * FROM patient_42 WHERE at > ? 
 	        	ORDER BY at ASC;''',(start_time,)).fetchall()
 	    else:
-		    start_time = self.convertToUnix(start)
-		    stop_time = self.convertToUnix(stop)
+		    start_time = self.__convertToUnix(start)
+		    stop_time = self.__convertToUnix(stop)
 		    array = c.execute('''SELECT * FROM patient_42 WHERE at 
 		    	BETWEEN ? AND ? ORDER BY at ASC;''',(start_time,stop_time)).fetchall()
 	            #this returns in ascending order, OLD to NEW
 	    
-	    noTup = [ [ self.convertToDateTime(array[i][j]) if datetimes and j==1 else array[i][j] for j in range(len(array[i]))] for i in range(len(array))]	    
+	    noTup = [ [ self.__convertToDateTime(array[i][j]) if (datetimes and j==1) else array[i][j] for j in range(len(array[i]))] for i in range(len(array))]	    
 
 	    if desc==True: #so if they want it in descending order, NEW to OLD
 	        return noTup[::-1]
@@ -136,41 +138,48 @@ class dataAccess():
 		c = conn.cursor()
 
 		if type(vals[vals.keys()[0]]) is int:
-			c.execute('ALTER TABLE patient_'+str(self.__pid)+' ADD COLUMN '+colName+' INTEGER;')
+			c.execute(''.join(['ALTER TABLE patient_',str(self.__pid),' ADD COLUMN ',colName,' INTEGER;']))
 		elif type(vals[vals.keys()[0]]) is float:
-			c.execute('ALTER TABLE patient_'+str(self.__pid)+' ADD COLUMN '+colName+' REAL;')
+			c.execute(''.join(['ALTER TABLE patient_',str(self.__pid),' ADD COLUMN ',colName,' REAL;']))
 		elif type(vals[vals.keys()[0]]) is str:
-			c.execute('ALTER TABLE patient_'+str(self.__pid)+' ADD COLUMN '+colName+' TEXT;')
+			c.execute(''.join(['ALTER TABLE patient_',str(self.__pid),' ADD COLUMN ',colName,' TEXT;']))
 		else:
 			print("ERROR: You entered an invalid type. Please consult the API and try again.")
 
 		for time in vals.keys():
-			uTime=self.convertToUnix(time)
-			c.execute('update patient_' +str(self.__pid)+ ' set '+colName+'='+str(vals[time])+' where at='+str(uTime)+';')
+			uTime=self.__convertToUnix(time)
+			c.execute(''.join(['UPDATE patient_',str(self.__pid),' SET ',colName,'=',
+				str(vals[time]),' WHERE at=',str(uTime),';']))
 
 		conn.commit()
 		c.close()
 		conn.close()
+		self.__cols = self.getColumnNames()
 
 	###########################################################################################
-	#This function changes the specified column names in a single table row with at = datetime
+	#This function changes the specified column names in a single table row with at = datetime (obj or int)
 	#Input: This function takes in datetime = the time object corresponding to that row in the 
 	#   table and a dictionary of values to update in that row where the key of each value is
 	#   column name into which it should be placed
 	#   *Note, this means you can also modify the at column.
 	#Ouput: This function does not return a value as output but updates the appropriate row's
 	#	values based on the dictionary that is passed in with the row-date
-	def updateRow(self, datetime, valueList):
+	def updateRow(self, datetime, valuelist):
 		conn = db.connect(self.__dbpath)
-		columns = self.getColumns(conn)
+		columns = self.__getColumns(conn)
 		c = conn.cursor()
 		tup = ""
-
-		for col in columns:
-			if col in valueList:
-				tup += col + " = " + str(valueList[col]) + " , "
-		datetime = self.convertToUnix(datetime)
-		c.execute("UPDATE patient_" + str(self.__pid) + " SET " + tup[:len(tup)-2]  + "WHERE at = " + str(datetime)+" ;")
+		tuplist = []
+		if type(datetime) != int:
+			datetime = self.__convertToUnix(datetime)
+		if "at" in valuelist:
+			if valuelist["at"] is not int:
+				valuelist["at"] = self.__convertToUnix(valuelist["at"])
+		tup = ''.join([ key+"='"+str(valuelist[key])+"', " if key in valuelist
+						 else "" for key in self.__cols ])[:-2]
+		#"UPDATE patient_## SET id=## at=##... WHERE at=##;"
+		c.execute(''.join(["UPDATE patient_",str(self.__pid)," SET ",tup,
+			"WHERE at = ",str(datetime)," ;"]))
 
 		conn.commit()
 		c.close()
@@ -184,9 +193,44 @@ class dataAccess():
 	#   a blank list if the table does not exist
 	def getColumnNames(self):
 		conn = db.connect(self.__dbpath)
-		columns = self.getColumns(conn)
+		columns = self.__getColumns(conn)
 		conn.close()
 		return columns
+
+	############################################################################
+	#This function takes in a 2 dimentional array which exactly matches the size
+	#	of the database and replaces the existing database contents with that of 
+	#	the array
+	#Input: 2D data array which is correctly formated to line up with the columns
+	#	of the database
+	#Output: None, stores the matrix and commits the changes
+	def storeData(self, data):
+		if len(data) != self.__nextID-1:
+			print("ERROR: dataAccess cannot store matrix: Improper matrix length")
+		elif len(data[0]) != len(self.__cols):
+			print("ERROR: dataAccess cannot store matrix: Incorrect number of columns")
+		else:
+			conn = db.connect(self.__dbpath)
+			c = conn.cursor()
+			noDT = False if type(data[0][1]) is int else True
+			#"UPDATE patient_## SET id=## at=##... WHERE at=##;"
+			for row in data:
+				c.execute(''.join(
+						[
+						"UPDATE patient_",str(self.__pid)," SET ",	
+
+						''.join([self.__cols[i]+"='"+str(row[i])+"', " if i!=1 and noDT 
+						else self.__cols[i]+"='"+str(self.__convertToUnix(row[i]))+"', " 
+						for i in range(len(self.__cols))])[:-2],
+
+						" WHERE at='", str(row[1]),"'"
+						]
+					)
+				)
+		conn.commit()
+		c.close()
+		conn.close()		
+
 
 ################################################################################
 #								PRIVATE METHODS								   #
@@ -194,16 +238,16 @@ class dataAccess():
 ################################################################################
 
 	#Returns an integer representing the number of seconds since 1/1/70 @12am
-	def convertToUnix(self,time):
+	def __convertToUnix(self,time):
 		return cal.timegm(time.utctimetuple())
 
 	#Takes an integer Unix/Posix time and returns an appropriate datetime obj
-	def convertToDateTime(self,time):
+	def __convertToDateTime(self,time):
 		return dt.datetime.utcfromtimestamp(time)
 
 	#takes a connection to the database, returns true if the tablename
 	#for self.__pid exists, else returns false
-	def tableExists(self,conn):
+	def __tableExists(self,conn):
 		c = conn.cursor()
 		c.execute('''SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=? ;'''
 			,("patient_"+str(self.__pid),))
@@ -215,8 +259,8 @@ class dataAccess():
 	#takes a connection to the database,
 	#returns the column names in ascending order (0 to len(row)-1)
 	#if the table does not exist returns an empty list
-	def getColumns(self,conn):
-		if self.tableExists(conn):
+	def __getColumns(self,conn):
+		if self.__tableExists(conn):
 			c=conn.cursor()
 			c.execute('SELECT * FROM patient_'+str(self.__pid)+';')
 			cols=[desc[0] for desc in c.description]
@@ -226,8 +270,8 @@ class dataAccess():
 			return []
 
 	#Finds the highest ID currently 
-	def getNextID(self,conn):
-		if self.tableExists(conn):
+	def __getNextID(self,conn):
+		if self.__tableExists(conn):
 			c=conn.cursor()
 			c.execute('''SELECT id FROM patient_'''+str(self.__pid)+''' ORDER BY id DESC''')
 
@@ -236,3 +280,16 @@ class dataAccess():
 			# print "last id found at " + str(last[0])
 			self.__nextID = last[0]+1
 		else: self.__nextID = 1
+
+
+
+
+		conn = db.connect(self.__dbpath) #get a connection to the DB
+		self.__cols = self.getColumns(conn) #get column names
+		self.getNextID(conn)	#get last ID used
+		conn.close()
+
+		 
+
+
+
