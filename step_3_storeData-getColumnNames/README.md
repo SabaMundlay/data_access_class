@@ -1,1 +1,1 @@
-#Write about overwriting the DB with new data and getting the column names
+Write about overwriting the DB with new data and getting the column names
