@@ -1,4 +1,2 @@
-#Write the README.md  
-
-See Alec's example at https://github.com/moxareck/AsiteBimMappingTool
+#Write the README.md for the new user walk through(i.e. the new step 0-4 convention)
 
