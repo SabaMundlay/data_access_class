@@ -1,5 +1,5 @@
 #There are two things in  this project right now:
  data_access_class
  
-README.md  (for the rest of the class / must be in proper detail ect. see Alec's file on Slack)
+README.md  (See Alec's example at https://github.com/moxareck/AsiteBimMappingTool)
 
