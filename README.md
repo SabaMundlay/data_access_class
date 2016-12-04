@@ -6,3 +6,16 @@ Also Saba: perhaps you should intergrate this gitHub repository with slack here:
 Click learn more
 
 #DataAccess 
+##Summary
+##Our Goals
+##Workflow of steps
+###step_0:
+###step_1:
+###step_2:
+###step_3:
+###step_4:
+
+##Notes
+
+
+(Updated: Dec. 4, 2016)
