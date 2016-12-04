@@ -12,9 +12,9 @@ melDB = DB(“Melissa”, dbpath)
 
 #Step 3: Create a dictionary that has the times and values that need to be added to the new column
 ###values dictionary would look like this
-values = [{"1465778389": 666}, {"1465777482":670}, {"1465778681": 690}]
+values = [{\"1465778389\": 666}, {\"1465777482\":670}, {\"1465778681\": 690}]
 
 #Step 4: Call the function by passing a name for the column and the dictionary of values
 ###call the function on the Melissa table to create a new column
-melDB.addcolumn(““slope””, values) 
+melDB.addcolumn('“slope”', values) 
 
