@@ -6,7 +6,7 @@ import dateTime as DT
 dbpath = “lab.db”
 
 ##Step 2: Connect to that database and create an instance of dataAccess
-kateDB = DB(“Melissa”, dbpath)
+kateDB = DB(“Kate”, dbpath)
 
 ##Step 3: Create a dictionary that has the times and values that need to be added to the new column
 values = [{\"1463134308\":666},{\"1463186140\":666},{\"1463384662\":666}]}
