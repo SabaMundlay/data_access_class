@@ -5,10 +5,10 @@ import dateTime as DT
 dbpath = “lab.db”
 
 #connect to the Database by creating an instance of dataAccess
-melDB = DB(“Melissa”, dbpath)
+kateDB = DB(“Kate”, dbpath)
 
 #values dictionary would look like this
-values = [{\"1465778389\": 666}, {\"1465777482\":670}, {\"1465778681\": 690}]
+values = [{\"1463134308\":666},{\"1463186140\":666},{\"1463384662\":666}]}
 
 #call the function on the Melissa table to create a new column
-melDB.addcolumn(““slope””, values) 
+kateDB.addcolumn(““slope””, values) 
