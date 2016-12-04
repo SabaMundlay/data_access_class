@@ -6,11 +6,11 @@ import dateTime as DT
 dbpath = “lab.db”
 
 ##Step 2: Connect to that database and create an instance of dataAccess
-melDB = DB(“Melissa”, dbpath)
+kateDB = DB(“Melissa”, dbpath)
 
 ##Step 3: Create a dictionary that has the times and values that need to be added to the new column
-values = [{\"1465778389\": 666}, {\"1465777482\":670}, {\"1465778681\": 690}]
+values = [{\"1463134308\":666},{\"1463186140\":666},{\"1463384662\":666}]}
 
 ##Step 4: Call the function by passing a name for the column and the dictionary of values
-melDB.addcolumn('“slope”', values) 
+kateDB.addcolumn('“slope”', values) 
 
