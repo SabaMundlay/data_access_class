@@ -9,8 +9,8 @@ dbpath = “lab.db”
 
 
 #connect to the Database by creating an instance of dataAccess
-melDB = DB(“Melissa”, dbpath)
+kateDB = DB(“Kate”, dbpath)
 
 
 #call the function on the Melissa table which will return all of the data in the database for Melissa
-print(melDB.getData())
+print(kateDB.getData())
