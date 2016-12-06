@@ -16,4 +16,4 @@ at = DT.datetime.strptime("2016-06-13 00:04:38","%Y-%m-%d %H:%M:%S")
 valueList = {"at": 2413, "carb": 204}
 
 ##Step 5: Call the function on the Kate table with new data for the specific row
-KateDB.updateRow(at, valueList)
+kateDB.updateRow(at, valueList)
