@@ -1,10 +1,7 @@
 from dataAccess import dataAccess as DB
 import dateTime as DT
 
-
 #path to filled out Database that has already been created with patient information from the provided CSVs
-
-
 dbpath = “lab.db”
 
 
