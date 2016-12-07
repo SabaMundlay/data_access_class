@@ -1,4 +1,3 @@
-
 ##Step 0: import appropriate libraries
 from dataAccess import dataAccess as DB
 
@@ -15,10 +14,10 @@ dbpath = "Kate.db"
 
 datapath = "Kate_G5_June13_Sept10_2016.csv"
 
-pidMelissa = "Kate"
+pid = "Kate"
 
 ##Step 2: Connect to the Database by creating an instance of dataAccess
-db = DB(pidKate, dbpath)
+db = DB(pid, dbpath)
 
 ##Step 3: Insert data into database
 db.insertData(datapath)
