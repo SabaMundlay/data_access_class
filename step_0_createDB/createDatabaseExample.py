@@ -4,10 +4,7 @@ import glob
 import os.path
 import sys
 
-dbpath = "lab.db"
-
-db = DB(pidMelissa, dbpath)
-db.insertData(datapath)
+dbpath = "Kate.db"
 
 pidKate = "Kate"
 db = DB(pidKate, dbpath)
