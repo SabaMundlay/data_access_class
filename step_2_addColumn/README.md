@@ -4,7 +4,7 @@ from dataAccess import dataAccess as DB
 import dateTime as DT
 
 ##Step 1: specify the path to the database file that has already been created
-dbpath = “lab.db”
+dbpath = “Kate.db”
 
 ##Step 2: Connect to that database and create an instance of dataAccess
 kateDB = DB(“Kate”, dbpath)
